@@ -30,6 +30,5 @@
     <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.9" level="project" />
     <orderEntry type="library" name="Maven: com.aliyun.oss:aliyun-sdk-oss:2.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.jdom:jdom:1.1" level="project" />
-    <orderEntry type="library" name="Maven: org.apache.commons:commons-csv:1.5" level="project" />
   </component>
 </module>

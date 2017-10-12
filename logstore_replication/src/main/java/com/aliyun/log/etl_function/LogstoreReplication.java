@@ -87,7 +87,7 @@ public class LogstoreReplication implements StreamRequestHandler {
                                 + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                     }
                     int sleepMillis = RETRY_SLEEP_MILLIS;
-                    if (errorCode.equals("ReadQuotaExceed") || errorCode.equals("ShardReadQuotaExceed")) {
+                    if (errorCode.equalsIgnoreCase("ReadQuotaExceed") || errorCode.equalsIgnoreCase("ShardReadQuotaExceed")) {
                         sleepMillis *= this.random.nextInt(5) + 2;
                     }
                     try {
@@ -142,7 +142,7 @@ public class LogstoreReplication implements StreamRequestHandler {
                         "), retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: " + e.GetErrorCode() +
                         ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                 if (retryTime >= MAX_RETRY_TIMES) {
-                    if (errorCode.equals("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equals("Unauthorized"))) {
+                    if (errorCode.equalsIgnoreCase("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equalsIgnoreCase("Unauthorized"))) {
                         this.logger.error("ignore this fail PostLogStoreLogs request, discard data, request_id: " + e.GetRequestId());
                         break;
                     }
@@ -150,7 +150,7 @@ public class LogstoreReplication implements StreamRequestHandler {
                             + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                 }
                 int sleepMillis = RETRY_SLEEP_MILLIS;
-                if (errorCode.equals("WriteQuotaExceed") || errorCode.equals("ShardWriteQuotaExceed")) {
+                if (errorCode.equalsIgnoreCase("WriteQuotaExceed") || errorCode.equalsIgnoreCase("ShardWriteQuotaExceed")) {
                     sleepMillis *= this.random.nextInt(5) + 2;
                 }
                 try {

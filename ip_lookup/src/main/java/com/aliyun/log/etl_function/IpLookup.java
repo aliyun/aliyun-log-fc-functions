@@ -22,16 +22,13 @@ import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.OSSException;
 import com.aliyun.oss.model.GetObjectRequest;
 import com.aliyun.oss.model.OSSObject;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 public class IpLookup implements StreamRequestHandler {
 
     private final static int MAX_RETRY_TIMES = 20;
     private final static int RETRY_SLEEP_MILLIS = 100;
     private final static Boolean IGNORE_FAIL = false;
-    public static ArrayList<IpData> IP_DATA_DICT_CACHE = new ArrayList<IpData>();
+    private static ArrayList<IpData> ipDataDictCache;
     private FunctionComputeLogger logger = null;
     private FunctionEvent event = null;
     private IpLookupParameter parameter = null;
@@ -54,7 +51,7 @@ public class IpLookup implements StreamRequestHandler {
         this.accessKeySecret = credentials.getAccessKeySecret();
         this.securityToken = credentials.getSecurityToken();
 
-        if (this.IP_DATA_DICT_CACHE.size() == 0) {
+        if (ipDataDictCache == null) {
             initIpData();
         }
 
@@ -80,7 +77,7 @@ public class IpLookup implements StreamRequestHandler {
                 ++retryTime;
                 try {
                     BatchGetLogResponse logDataRes = sourceClient.BatchGetLog(logProjectName, logLogstoreName, logShardId,
-                            3, cursor, logEndCurosr);
+                            2, cursor, logEndCurosr);
                     logGroupDataList = logDataRes.GetLogGroups();
                     nextCursor = logDataRes.GetNextCursor();
                     /*
@@ -98,7 +95,8 @@ public class IpLookup implements StreamRequestHandler {
                                 + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                     }
                     int sleepMillis = RETRY_SLEEP_MILLIS;
-                    if (errorCode.equals("ReadQuotaExceed") || errorCode.equals("ShardReadQuotaExceed")) {
+                    if (errorCode.equalsIgnoreCase("ReadQuotaExceed")
+                            || errorCode.equalsIgnoreCase("ShardReadQuotaExceed")) {
                         sleepMillis *= 2 + this.random.nextInt(5);
                     }
                     try {
@@ -133,7 +131,6 @@ public class IpLookup implements StreamRequestHandler {
     private boolean processData(FastLogGroup fastLogGroup) throws IOException {
         String ipKeyName = this.parameter.getIpKeyName();
         String countryKeyName = this.parameter.getCountryKeyName();
-        String regionKeyName = this.parameter.getRegionKeyName();
         String provinceKeyName = this.parameter.getProvinceKeyName();
         String cityKeyName = this.parameter.getCityKeyName();
         String ispKeyName = this.parameter.getIspKeyName();
@@ -153,9 +150,6 @@ public class IpLookup implements StreamRequestHandler {
                     if (ipData != null) {
                         if (countryKeyName.length() > 0) {
                             item.PushBack(countryKeyName, ipData.getCountry());
-                        }
-                        if (regionKeyName.length() > 0) {
-                            item.PushBack(regionKeyName, ipData.getRegion());
                         }
                         if (provinceKeyName.length() > 0) {
                             item.PushBack(provinceKeyName, ipData.getProvince());
@@ -197,7 +191,7 @@ public class IpLookup implements StreamRequestHandler {
                         "), retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: " + errorCode +
                         ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                 if (retryTime >= MAX_RETRY_TIMES) {
-                    if (errorCode.equals("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equals("Unauthorized"))) {
+                    if (errorCode.equalsIgnoreCase("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equalsIgnoreCase("Unauthorized"))) {
                         this.logger.error("ignore this fail PostLogStoreLogs request, discard data, request_id: " + e.GetRequestId());
                         break;
                     }
@@ -205,7 +199,7 @@ public class IpLookup implements StreamRequestHandler {
                             + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
                 }
                 int sleepMillis = RETRY_SLEEP_MILLIS;
-                if (errorCode.equals("WriteQuotaExceed") || errorCode.equals("ShardWriteQuotaExceed")) {
+                if (errorCode.equalsIgnoreCase("WriteQuotaExceed") || errorCode.equalsIgnoreCase("ShardWriteQuotaExceed")) {
                     sleepMillis *= this.random.nextInt(5) + 2;
                 }
                 try {
@@ -219,7 +213,8 @@ public class IpLookup implements StreamRequestHandler {
 
     private void initIpData() throws IOException {
 
-        this.logger.info("start to initIpData from oss object");
+        this.logger.info("start to init IpData from oss object");
+        ipDataDictCache = new ArrayList<IpData>();
         InputStream inputStream = null;
         OSSObject ossObject = null;
         OSSClient ossClient = new OSSClient(this.parameter.getOssEndpointOfIpData(), this.accessKeyId, this.accessKeySecret, this.securityToken);
@@ -261,26 +256,24 @@ public class IpLookup implements StreamRequestHandler {
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         String line;
         while ((line = reader.readLine()) != null) {
-            CSVParser parser = CSVParser.parse(line, CSVFormat.RFC4180);
-            for (CSVRecord csvRecord : parser) {
-                if (csvRecord.size() == 16) {
-                    try {
-                        this.IP_DATA_DICT_CACHE.add(new IpData(Long.parseLong(csvRecord.get(0)),
-                                Long.parseLong(csvRecord.get(1)),
-                                csvRecord.get(4),
-                                csvRecord.get(6),
-                                csvRecord.get(8),
-                                csvRecord.get(10),
-                                csvRecord.get(12),
-                                csvRecord.get(14)));
-                    } catch (NumberFormatException e) {
-                        this.logger.error("invalid line in ipData file, cast ip to long fail, exception: " + e.getMessage());
-                    }
+            String fields[] = line.trim().split(",");
+            if (fields.length == 16) {
+                try {
+                    ipDataDictCache.add(new IpData(Long.parseLong(fields[0].trim()),
+                            Long.parseLong(fields[1].trim()),
+                            trimQuote(fields[4].trim()),
+                            trimQuote(fields[8].trim()),
+                            trimQuote(fields[10].trim()),
+                            trimQuote(fields[14].trim())));
+                } catch (NumberFormatException e) {
+                    this.logger.warn("invalid ipData, " + line + ", exception: " + e.getMessage());
                 }
+            } else {
+                this.logger.warn("invalid ipData, " + line + ", unexpected fields count");
             }
         }
         ossClient.shutdown();
-        this.logger.info("finish initIpData, size: " + this.IP_DATA_DICT_CACHE.size());
+        this.logger.info("finish init IpData, size: " + ipDataDictCache.size());
     }
 
     private IpData findIpData(String ip) {
@@ -300,11 +293,11 @@ public class IpLookup implements StreamRequestHandler {
             return null;
         }
         int start = 0;
-        int end = this.IP_DATA_DICT_CACHE.size() - 1;
+        int end = ipDataDictCache.size() - 1;
         int mid;
         while (start <= end) {
             mid = (start + end) / 2;
-            IpData midIpData = IP_DATA_DICT_CACHE.get(mid);
+            IpData midIpData = ipDataDictCache.get(mid);
             if (ipKey < midIpData.getBeginIp()) {
                 end = mid - 1;
             } else if (ipKey <= midIpData.getEndIp()) {
@@ -316,4 +309,10 @@ public class IpLookup implements StreamRequestHandler {
         return null;
     }
 
+    private String trimQuote(String str) {
+        if (str.length() >= 2 && str.charAt(0) == '"' && str.charAt(str.length() - 1) == '"') {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
+    }
 }

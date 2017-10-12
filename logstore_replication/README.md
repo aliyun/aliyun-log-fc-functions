@@ -4,7 +4,7 @@
 
 # 输入参数
 
-通用配置：请参考[日志服务-自定义ETL-用户指南]（https://help.aliyun.com/document_detail/60291.html）。
+通用配置：请参考[日志服务-自定义ETL-用户指南](https://help.aliyun.com/document_detail/60291.html)。
 
 函数配置（JSON Object类型，与具体的函数实现有关）如下：
 
