@@ -86,7 +86,7 @@ functioin event根据用户配置增加logstore的shard curosr等信息后得到
 | transform | cityKeyName | N | 加工生成的ip归属城市字段key名，如留空或该配置不存在则不输出  | 
 | transform | ispKeyName | N | 加工生成的ip归属ISP字段key名，如留空或该配置不存在则不输出  | 
 
-> 请下载字典文件 http://log-etl-resources.oss-cn-hangzhou.aliyuncs.com/ipdata/ipdata_geo_isp_code.txt.utf8.gz 并上传到您账号下的OSS bucket，填写相应的ossEndpointOfIpData/ossBucketOfIpData/ossObjectOfIpData配置。建议将OSS Bucket与函数服务Service放在相同Region，使用内网下载以避免函数执行过程中公网传输产生的费用（函数实现已做优化，如果函数在5分钟内会执行一次，将会复用之前的文件内容并不需要重新下载字典文件）。
+> 请下载字典文件 http://log-etl-resources.oss-cn-hangzhou.aliyuncs.com/ipdata/ipdata_geo_isp_code.txt.utf8.gz 并上传到您账号下的OSS bucket，填写相应的ossEndpointOfIpData/ossBucketOfIpData/ossObjectOfIpData配置。建议将OSS Bucket与函数服务Service放在相同Region，使用内网下载以避免函数执行过程中公网传输产生的费用（函数实现已做优化，如果函数在5分钟内会执行一次，将会复用之前的文件内容并不需要重新下载字典文件）。
 
 # 函数输出 
 
