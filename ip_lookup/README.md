@@ -1,4 +1,4 @@
-# 描述
+# 功能
 
 该函数订阅日志服务logstore的实时数据，根据日志字段中的ip值，查找ip数据库获得ip归属的国家、省、市、ISP信息。最终在原始数据基础上添加ip归属信息后写入另一个logsotre。
 
@@ -25,11 +25,27 @@ province:浙江省
 time:09/Oct/2017:06:12:03 +0800
 ```
 
-# 输入参数
+如果把函数比作一个管道，数据输入、输出如下：
 
-通用配置：请参考[日志服务-自定义ETL-用户指南](https://help.aliyun.com/document_detail/60291.html)。
+* 数据输入
 
-函数配置（JSON Object类型，与具体的函数实现有关）：
+数据源logstore的<shard_id, begin_cursor, shard_cursor>三元组，指示function需要读取哪些数据。
+
+* 数据输出
+
+源数据在根据函数配置添加相关ip归属字段后写往目标日志服务project、logstore。
+
+# 函数输入（[函数event](https://help.aliyun.com/document_detail/51885.html)）
+
+functioin event根据用户配置增加logstore的shard curosr等信息后得到。输入用于指示function从shard的什么位置开始、停止读取数据，并为函数自定义逻辑提供额外配置（例如数据做什么加工、写出到哪里）。当shard有数据写入时，日志服务会定时触发函数执行。
+
+在[函数服务控制台](https://fc.console.aliyun.com/#/serviceList/)需要填写以下配置项：
+
+* 通用配置
+
+请参考[日志服务-自定义ETL-用户指南](https://help.aliyun.com/document_detail/60291.html)。
+
+* 函数配置（JSON Object类型，与具体的函数实现有关）
 
 ```
 {
@@ -70,15 +86,19 @@ time:09/Oct/2017:06:12:03 +0800
 | transform | cityKeyName | N | 加工生成的ip归属城市字段key名，如留空或该配置不存在则不输出  | 
 | transform | ispKeyName | N | 加工生成的ip归属ISP字段key名，如留空或该配置不存在则不输出  | 
 
-# 输出参数
+> 请下载字典文件 http://log-etl-resources.oss-cn-hangzhou.aliyuncs.com/ipdata/ipdata_geo_isp_code.txt.utf8.gz 并上传到您账号下的OSS bucket，填写相应的ossEndpointOfIpData/ossBucketOfIpData/ossObjectOfIpData配置。建议将OSS Bucket与函数服务Service放在相同Region，使用内网下载以避免函数执行过程中公网传输产生的费用（函数实现已做优化，如果函数在5分钟内会执行一次，将会复用之前的文件内容并不需要重新下载字典文件）。
 
-输出为一个JSON Object，包含：ingestLines（读取日志行数）、ingestBytes（读取日志字节数）、shipLines（输出日志行数）、shipBytes（输出日志字节数）。
+# 函数输出 
+
+执行成功的函数会将源logstore数据做加工后再写到目标logstore，并返回一个JSON Object序列化的字符串，包含：ingestLines（读取日志行数）、ingestBytes（读取日志字节数）、shipLines（输出日志行数）、shipBytes（输出日志字节数）。
 
 如执行过程中发生异常（例如读写logstore失败），会抛出IOException终止函数运行。
 
 # 注意事项
 
 该函数会初始化一个数组用于存储ipdata资源字典，建议为函数设置768MB+内存规格。
+
+如果logstore单shard日志流量较大，建议设置120s以上超时时间。
 
 # 权限策略
 
