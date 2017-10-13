@@ -25,6 +25,14 @@
 https://github.com/aliyun/aliyun-log-fc-functions/blob/master/logstore_replication/jar/0.1.0/log-etl-logstore-replication.jar
 ```
 
+* 配置
+
+| key | value |
+|-----|-------|
+| runtime | java8 |
+| handler | com.aliyun.log.etl_function.LogstoreReplication::handleRequest |
+| memory | 384MB |
+| timeout | 120s |
 
 # ip-lookup（ip归属查找）
 
@@ -53,3 +61,12 @@ https://github.com/aliyun/aliyun-log-fc-functions/blob/master/logstore_replicati
 ```
 https://github.com/aliyun/aliyun-log-fc-functions/blob/master/ip_lookup/jar/0.1.0/log-etl-ip-lookup.jar
 ```
+
+* 配置
+
+| key | value |
+|-----|-------|
+| runtime | java8 |
+| handler | com.aliyun.log.etl_function.IpLookup::handleRequest |
+| memory | 768MB |
+| timeout | 120s |
