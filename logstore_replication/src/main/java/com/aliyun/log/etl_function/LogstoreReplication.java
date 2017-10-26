@@ -107,7 +107,7 @@ public class LogstoreReplication implements StreamRequestHandler {
                 }
             }
             cursor = nextCursor;
-            if (cursor.equals(logEndCurosr) || logGroupDataList.size() == 0) {
+            if (cursor.equals(logEndCurosr)) {
                 /*
                 this.logger.debug("read logstore shard to defined cursor done, project_name: " + logProjectName +
                         ", job_name: " + this.event.getJobName() + ", task_id: " + this.event.getTaskId()
