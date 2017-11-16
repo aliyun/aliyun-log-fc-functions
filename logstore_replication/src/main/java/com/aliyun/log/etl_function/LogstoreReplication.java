@@ -21,8 +21,9 @@ import com.aliyun.openservices.log.response.BatchGetLogResponse;
 
 public class LogstoreReplication implements StreamRequestHandler {
 
-    private final static int MAX_RETRY_TIMES = 20;
-    private final static int RETRY_SLEEP_MILLIS = 100;
+    private final static int MAX_RETRY_TIMES = 30;
+    private final static int RETRY_SLEEP_MILLIS = 200;
+    private final static int QUOTA_RETRY_SLEEP_MILLIS = 2000;
     private final static Boolean IGNORE_FAIL = false;
     private FunctionComputeLogger logger = null;
     private FunctionEvent event = null;
@@ -31,7 +32,6 @@ public class LogstoreReplication implements StreamRequestHandler {
     private String accessKeyId = "";
     private String accessKeySecret = "";
     private String securityToken = "";
-    private Random random = new Random(System.currentTimeMillis());
 
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
 
@@ -65,8 +65,10 @@ public class LogstoreReplication implements StreamRequestHandler {
             List<LogGroupData> logGroupDataList = null;
             String nextCursor = "";
             int retryTime = 0;
+            int invalidRetryTime = 0;
             while (true) {
-                ++retryTime;
+                String errorCode, errorMessage;
+                int sleepMillis = RETRY_SLEEP_MILLIS;
                 try {
                     BatchGetLogResponse logDataRes = sourceClient.BatchGetLog(logProjectName, logLogstoreName, logShardId,
                             3, cursor, logEndCurosr);
@@ -77,24 +79,36 @@ public class LogstoreReplication implements StreamRequestHandler {
                             + ", task_id: " + this.event.getTaskId() + ", cursor: " + cursor + ", logGroup count: " + logGroupDataList.size());
                     */
                     break;
-                } catch (LogException e) {
-                    String errorCode = e.GetErrorCode();
+                } catch (LogException le) {
+                    errorCode = le.GetErrorCode();
+                    errorMessage = le.GetErrorMessage().replaceAll("\\n", " ");
                     this.logger.warn("BatchGetLog fail, project_name: " + logProjectName + ", job_name: " + this.event.getJobName()
                             + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: "
-                            + errorCode + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                    if (retryTime >= MAX_RETRY_TIMES) {
-                        throw new IOException("BatchGetLog fail, retry_time: " + retryTime + ", error_code: " + errorCode
-                                + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                    }
-                    int sleepMillis = RETRY_SLEEP_MILLIS;
+                            + errorCode + ", error_message: " + errorMessage + ", request_id: " + le.GetRequestId());
                     if (errorCode.equalsIgnoreCase("ReadQuotaExceed") || errorCode.equalsIgnoreCase("ShardReadQuotaExceed")) {
-                        sleepMillis *= this.random.nextInt(5) + 2;
+                        sleepMillis = QUOTA_RETRY_SLEEP_MILLIS;
+                    } else if (errorCode.equalsIgnoreCase("Unauthorized") || errorCode.equalsIgnoreCase("InvalidAccessKeyId")
+                            || errorCode.equalsIgnoreCase("ProjectNotExist") || errorCode.equalsIgnoreCase("LogStoreNotExist")
+                            || errorCode.equalsIgnoreCase("ShardNotExist")) {
+                        ++invalidRetryTime;
                     }
-                    try {
-                        Thread.sleep(sleepMillis);
-                    } catch (InterruptedException ie) {
-                    }
+                } catch (Exception e) {
+                    errorCode = "UnknownException";
+                    errorMessage = e.getMessage().replaceAll("\\n", " ");
+                    this.logger.warn("BatchGetLog fail, project_name: " + logProjectName + ", job_name: " + this.event.getJobName()
+                            + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES
+                            + ", error_code: " + errorCode + ", error_message: " + errorMessage);
                 }
+                if (invalidRetryTime >= 2 || retryTime >= MAX_RETRY_TIMES) {
+                    throw new IOException("BatchGetLog fail, retry_time: " + retryTime + ", error_code: " + errorCode
+                            + ", error_message: " + errorMessage);
+                }
+                try {
+                    Thread.sleep(sleepMillis);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                ++retryTime;
             }
             for (LogGroupData logGroupData : logGroupDataList) {
                 FastLogGroup fastLogGroup = logGroupData.GetFastLogGroup();
@@ -125,8 +139,10 @@ public class LogstoreReplication implements StreamRequestHandler {
         PutLogsRequest req = new PutLogsRequest(targetProjectName, targetLogstoreName, fastLogGroup.hasTopic() ? fastLogGroup.getTopic() : "",
                 fastLogGroup.hasSource() ? fastLogGroup.getSource() : "", logGroupBytes, null);
         int retryTime = 0;
+        int invalidRetryTime = 0;
         while (true) {
-            ++retryTime;
+            String errorCode, errorMessage;
+            int sleepMillis = RETRY_SLEEP_MILLIS;
             try {
                 this.targetClient.PutLogs(req);
                 /*
@@ -135,29 +151,40 @@ public class LogstoreReplication implements StreamRequestHandler {
                         "), logs: " + fastLogGroup.getLogsCount());
                 */
                 return true;
-            } catch (LogException e) {
-                String errorCode = e.GetErrorCode();
-                this.logger.warn("PutLogs fail, project_name: " + this.event.getLogProjectName() + ", job_name: " + this.event.getJobName()
-                        + ", task_id: " + this.event.getTaskId() + ", target(" + targetProjectName + "/" + targetLogstoreName +
-                        "), retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: " + e.GetErrorCode() +
-                        ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                if (retryTime >= MAX_RETRY_TIMES) {
-                    if (errorCode.equalsIgnoreCase("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equalsIgnoreCase("Unauthorized"))) {
-                        this.logger.error("ignore this fail PostLogStoreLogs request, discard data, request_id: " + e.GetRequestId());
-                        break;
-                    }
-                    throw new IOException("PutLogs fail, retryTime: " + retryTime + ", error_code: " + errorCode
-                            + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                }
-                int sleepMillis = RETRY_SLEEP_MILLIS;
+            } catch (LogException le) {
+                errorCode = le.GetErrorCode();
+                errorMessage = le.GetErrorMessage().replaceAll("\\n", " ");
+                this.logger.warn("PutLogs fail, project_name: " + targetProjectName + ", job_name: " + this.event.getJobName()
+                        + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: "
+                        + errorCode + ", error_message: " + errorMessage + ", request_id: " + le.GetRequestId());
                 if (errorCode.equalsIgnoreCase("WriteQuotaExceed") || errorCode.equalsIgnoreCase("ShardWriteQuotaExceed")) {
-                    sleepMillis *= this.random.nextInt(5) + 2;
+                    sleepMillis = QUOTA_RETRY_SLEEP_MILLIS;
+                } else if (errorCode.equalsIgnoreCase("Unauthorized") || errorCode.equalsIgnoreCase("InvalidAccessKeyId")
+                        || errorCode.equalsIgnoreCase("ProjectNotExist") || errorCode.equalsIgnoreCase("LogStoreNotExist")
+                        || errorCode.equalsIgnoreCase("ShardNotExist") || errorCode.equalsIgnoreCase("PostBodyInvalid")) {
+                    ++invalidRetryTime;
                 }
-                try {
-                    Thread.sleep(sleepMillis);
-                } catch (InterruptedException ie) {
+            } catch (Exception e) {
+                errorCode = "UnknownException";
+                errorMessage = e.getMessage().replaceAll("\\n", " ");
+                this.logger.warn("PutLogs fail, project_name: " + targetProjectName + ", job_name: " + this.event.getJobName()
+                        + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES
+                        + ", error_code: " + errorCode + ", error_message: " + errorMessage);
+            }
+            if (invalidRetryTime >= 2 || retryTime >= MAX_RETRY_TIMES) {
+                if (IGNORE_FAIL) {
+                    break;
+                } else {
+                    throw new IOException("PutLogs fail, retry_time: " + retryTime + ", error_code: " + errorCode
+                            + ", error_message: " + errorMessage);
                 }
             }
+            try {
+                Thread.sleep(sleepMillis);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            ++retryTime;
         }
         return false;
     }

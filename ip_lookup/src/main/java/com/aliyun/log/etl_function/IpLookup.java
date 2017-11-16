@@ -6,7 +6,6 @@ import com.aliyun.fc.runtime.StreamRequestHandler;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import com.aliyun.fc.runtime.*;
@@ -27,7 +26,7 @@ public class IpLookup implements StreamRequestHandler {
 
     private final static int MAX_RETRY_TIMES = 30;
     private final static int RETRY_SLEEP_MILLIS = 200;
-    private final static int QUOTA_RETRY_SLEEP_MILLIS = 1000;
+    private final static int QUOTA_RETRY_SLEEP_MILLIS = 2000;
     private final static Boolean IGNORE_FAIL = false;
     private static ArrayList<IpData> ipDataDictCache = new ArrayList<IpData>();
     private FunctionComputeLogger logger = null;
@@ -73,12 +72,14 @@ public class IpLookup implements StreamRequestHandler {
         while (true) {
             List<LogGroupData> logGroupDataList = null;
             String nextCursor = "";
+            int invalidRetryTime = 0;
             int retryTime = 0;
             while (true) {
-                ++retryTime;
+                String errorCode, errorMessage;
+                int sleepMillis = RETRY_SLEEP_MILLIS;
                 try {
                     BatchGetLogResponse logDataRes = sourceClient.BatchGetLog(logProjectName, logLogstoreName, logShardId,
-                            2, cursor, logEndCurosr);
+                            3, cursor, logEndCurosr);
                     logGroupDataList = logDataRes.GetLogGroups();
                     nextCursor = logDataRes.GetNextCursor();
                     /*
@@ -86,25 +87,36 @@ public class IpLookup implements StreamRequestHandler {
                             + ", task_id: " + this.event.getTaskId() + ", cursor: " + cursor + ", logGroup count: " + logGroupDataList.size());
                     */
                     break;
-                } catch (LogException e) {
-                    String errorCode = e.GetErrorCode();
-                    this.logger.warn("BatchGetLog fail, project_name: " + logProjectName + ", job_name: " + this.event.getJobName() + ", task_id: "
-                            + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: " + errorCode
-                            + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                    if (retryTime >= MAX_RETRY_TIMES) {
-                        throw new IOException("BatchGetLog fail, retry_time: " + retryTime + ", error_code: " + errorCode
-                                + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                    }
-                    int sleepMillis = RETRY_SLEEP_MILLIS;
-                    if (errorCode.equalsIgnoreCase("ReadQuotaExceed")
-                            || errorCode.equalsIgnoreCase("ShardReadQuotaExceed")) {
+                } catch (LogException le) {
+                    errorCode = le.GetErrorCode();
+                    errorMessage = le.GetErrorMessage().replaceAll("\\n", " ");
+                    this.logger.warn("BatchGetLog fail, project_name: " + logProjectName + ", job_name: " + this.event.getJobName()
+                            + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: "
+                            + errorCode + ", error_message: " + errorMessage + ", request_id: " + le.GetRequestId());
+                    if (errorCode.equalsIgnoreCase("ReadQuotaExceed") || errorCode.equalsIgnoreCase("ShardReadQuotaExceed")) {
                         sleepMillis = QUOTA_RETRY_SLEEP_MILLIS;
+                    } else if (errorCode.equalsIgnoreCase("Unauthorized") || errorCode.equalsIgnoreCase("InvalidAccessKeyId")
+                            || errorCode.equalsIgnoreCase("ProjectNotExist") || errorCode.equalsIgnoreCase("LogStoreNotExist")
+                            || errorCode.equalsIgnoreCase("ShardNotExist")) {
+                        ++invalidRetryTime;
                     }
-                    try {
-                        Thread.sleep(sleepMillis);
-                    } catch (InterruptedException ie) {
-                    }
+                } catch (Exception e) {
+                    errorCode = "UnknownException";
+                    errorMessage = e.getMessage().replaceAll("\\n", " ");
+                    this.logger.warn("BatchGetLog fail, project_name: " + logProjectName + ", job_name: " + this.event.getJobName()
+                            + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES
+                            + ", error_code: " + errorCode + ", error_message: " + errorMessage);
                 }
+                if (invalidRetryTime >= 2 || retryTime >= MAX_RETRY_TIMES) {
+                    throw new IOException("BatchGetLog fail, retry_time: " + retryTime + ", error_code: " + errorCode
+                            + ", error_message: " + errorMessage);
+                }
+                try {
+                    Thread.sleep(sleepMillis);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                ++retryTime;
             }
             for (LogGroupData logGroupData : logGroupDataList) {
                 FastLogGroup fastLogGroup = logGroupData.GetFastLogGroup();
@@ -178,8 +190,10 @@ public class IpLookup implements StreamRequestHandler {
         PutLogsRequest req = new PutLogsRequest(targetProjectName, targetLogstoreName, fastLogGroup.hasTopic() ? fastLogGroup.getTopic() : "",
                 fastLogGroup.hasSource() ? fastLogGroup.getSource() : "", logItems);
         int retryTime = 0;
+        int invalidRetryTime = 0;
         while (true) {
-            ++retryTime;
+            String errorCode, errorMessage;
+            int sleepMillis = RETRY_SLEEP_MILLIS;
             try {
                 this.targetClient.PutLogs(req);
                 /*
@@ -188,29 +202,40 @@ public class IpLookup implements StreamRequestHandler {
                         "), logs: " + fastLogGroup.getLogsCount());
                 */
                 return true;
-            } catch (LogException e) {
-                String errorCode = e.GetErrorCode();
-                this.logger.warn("PutLogs fail, project_name: " + this.event.getLogProjectName() + ", job_name: " + this.event.getJobName()
-                        + ", task_id: " + this.event.getTaskId() + ", target(" + targetProjectName + "/" + targetLogstoreName +
-                        "), retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: " + errorCode +
-                        ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                if (retryTime >= MAX_RETRY_TIMES) {
-                    if (errorCode.equalsIgnoreCase("PostBodyInvalid") || (IGNORE_FAIL && !errorCode.equalsIgnoreCase("Unauthorized"))) {
-                        this.logger.error("ignore this fail PostLogStoreLogs request, discard data, request_id: " + e.GetRequestId());
-                        break;
-                    }
-                    throw new IOException("PutLogs fail, retryTime: " + retryTime + ", error_code: " + errorCode
-                            + ", error_message: " + e.GetErrorMessage().replaceAll("\\n", " ") + ", request_id: " + e.GetRequestId());
-                }
-                int sleepMillis = RETRY_SLEEP_MILLIS;
+            } catch (LogException le) {
+                errorCode = le.GetErrorCode();
+                errorMessage = le.GetErrorMessage().replaceAll("\\n", " ");
+                this.logger.warn("PutLogs fail, project_name: " + targetProjectName + ", job_name: " + this.event.getJobName()
+                        + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES + ", error_code: "
+                        + errorCode + ", error_message: " + errorMessage + ", request_id: " + le.GetRequestId());
                 if (errorCode.equalsIgnoreCase("WriteQuotaExceed") || errorCode.equalsIgnoreCase("ShardWriteQuotaExceed")) {
                     sleepMillis = QUOTA_RETRY_SLEEP_MILLIS;
+                } else if (errorCode.equalsIgnoreCase("Unauthorized") || errorCode.equalsIgnoreCase("InvalidAccessKeyId")
+                        || errorCode.equalsIgnoreCase("ProjectNotExist") || errorCode.equalsIgnoreCase("LogStoreNotExist")
+                        || errorCode.equalsIgnoreCase("ShardNotExist") || errorCode.equalsIgnoreCase("PostBodyInvalid")) {
+                    ++invalidRetryTime;
                 }
-                try {
-                    Thread.sleep(sleepMillis);
-                } catch (InterruptedException ie) {
+            } catch (Exception e) {
+                errorCode = "UnknownException";
+                errorMessage = e.getMessage().replaceAll("\\n", " ");
+                this.logger.warn("PutLogs fail, project_name: " + targetProjectName + ", job_name: " + this.event.getJobName()
+                        + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES
+                        + ", error_code: " + errorCode + ", error_message: " + errorMessage);
+            }
+            if (invalidRetryTime >= 2 || retryTime >= MAX_RETRY_TIMES) {
+                if (IGNORE_FAIL) {
+                    break;
+                } else {
+                    throw new IOException("PutLogs fail, retry_time: " + retryTime + ", error_code: " + errorCode
+                            + ", error_message: " + errorMessage);
                 }
             }
+            try {
+                Thread.sleep(sleepMillis);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            ++retryTime;
         }
         return false;
     }
@@ -284,7 +309,7 @@ public class IpLookup implements StreamRequestHandler {
     private IpData findIpData(String ip) {
         String[] ipFields = ip.trim().split("\\.");
         if (ipFields.length != 4) {
-            if (sampleErrorIpCount % 100 == 0) {
+            if (sampleErrorIpCount % 1000 == 0) {
                 this.logger.error("invalid ip value: " + ip);
             }
             ++sampleErrorIpCount;
@@ -297,7 +322,7 @@ public class IpLookup implements StreamRequestHandler {
                     (Long.parseLong(ipFields[2]) << 8) +
                     (Long.parseLong(ipFields[3]));
         } catch (NumberFormatException e) {
-            if (sampleErrorIpCount % 100 == 0) {
+            if (sampleErrorIpCount % 1000 == 0) {
                 this.logger.error("invalid ip value: " + ip + ", exception: " + e.getMessage());
             }
             ++sampleErrorIpCount;

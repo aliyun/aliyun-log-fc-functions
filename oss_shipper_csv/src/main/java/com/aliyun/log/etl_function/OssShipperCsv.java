@@ -109,7 +109,7 @@ public class OssShipperCsv implements StreamRequestHandler {
                             + ", task_id: " + this.event.getTaskId() + ", retry_time: " + retryTime + "/" + MAX_RETRY_TIMES
                             + ", error_code: " + errorCode + ", error_message: " + errorMessage);
                 }
-                if (invalidRetryTime >= 3 || retryTime >= MAX_RETRY_TIMES) {
+                if (invalidRetryTime >= 2 || retryTime >= MAX_RETRY_TIMES) {
                     throw new IOException("BatchGetLog fail, retry_time: " + retryTime + ", error_code: " + errorCode
                             + ", error_message: " + errorMessage);
                 }
