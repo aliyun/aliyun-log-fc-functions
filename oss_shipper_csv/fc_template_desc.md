@@ -8,7 +8,7 @@ oss-shipper-csv
 
 * description
 
-该函数订阅日志服务logstore的实时数据，对于配置的日志字段，按序取出其值构建出一个csv日志行，最终由一批数据构成目标csv文件。该csv文件可以选择直接存入OSS，或者使用snappy/gzip做文件做整体压缩后写入OSS。使用前请阅读<a href="https://github.com/aliyun/aliyun-log-fc-functions/blob/master/oss_shipper_csv/README.md" target="#">oss-shipper-csv函数说明</a>。
+该函数订阅日志服务logstore的实时数据，对于配置的日志字段，按序取出其值构建出一个csv日志行，最终由一批数据构成目标csv文件。该csv文件可以选择直接存入OSS，或者使用snappy/gzip做文件做整体压缩后写入OSS。使用前请阅读<a href="https://github.com/aliyun/aliyun-log-fc-functions/blob/master/oss_shipper_csv/README.md" target="#">oss-shipper-csv函数说明</a>。
 
 * input
 

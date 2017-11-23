@@ -1,6 +1,6 @@
 # 功能
 
-该函数订阅日志服务logstore的实时数据，对于配置的日志字段，按序取出其值构建出一个csv日志行，最终由一批数据构成csv文件。该csv文件可以选择直接存入OSS，或者使用snappy/gzip做文件做整体压缩后写入OSS。
+该函数订阅日志服务logstore的实时数据，对于配置的日志字段，按序取出其值构建出一个csv日志行，最终由一批数据构成csv文件。该csv文件可以选择直接存入OSS，或者使用snappy/gzip做文件做整体压缩后写入OSS。
 
 如果把函数比作一个管道，数据输入、输出如下：
 
@@ -59,9 +59,9 @@
 |--------|---------|--------|------|
 | target | ossEndpoint | Y | OSS服务[访问入口](https://help.aliyun.com/document_detail/31837.html?spm=5176.product31815.6.577.ZMT6qZ) |
 | target | ossBucket | Y | OSS bucket |
-| target | ossPrefix | Y | 文件存储到bucket下面的哪个目录前缀下 |
+| target | ossPrefix | Y | 文件存储到bucket下面的哪个目录前缀下 |
 | target | ossPostfix | Y | 文件的后缀 |
-| target | ossDateFormat | Y | 将函数event中的cursorTime（本次调用要处理的数据的最大服务端数据接收时间）使用[Java SimpleDateFormat](https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html?spm=5176.doc29001.2.7.ktAp3Z)定义一个日志格式字符串，以此来定义写到OSS的Object文件所在的目录层次结构，其中斜线/表示一级OSS目录。 |
+| target | ossDateFormat | Y | 将函数event中的cursorTime（本次调用要处理的数据的最大服务端数据接收时间）使用[Java SimpleDateFormat](https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html?spm=5176.doc29001.2.7.ktAp3Z)定义一个日志格式字符串，以此来定义写到OSS的Object文件所在的目录层次结构，其中斜线/表示一级OSS目录。 |
 | transform | compressType | Y | 文件级别整体压缩，支持：""、"gzip"、"snappy" | 
 | transform | delimiterChar | Y | 长度为1的字符串，用于分割不同字段 | 
 | transform | quoteChar | Y | 长度为1的字符串，字段内出现分隔符（delimiter）或换行符等情况时，需要用quote前后包裹这个字段，避免读数据时造成字段错误切分 |
@@ -70,7 +70,7 @@
 | transform | columnNames | Y | 可以在日志服务数据预览或索引查询页面查看一条日志的多个Key-Value，将你需要投递到OSS的字段名（Key）有序填入。如您配置的Key名称在日志中找不到，csv行中这里一列值将设置为nullColumnValue | 
 | transform | enableHeader | Y | 是否在csv文件的首行加上字段名的描述 | 
 
-举例说明OSS目录格式如下：
+举例说明OSS目录格式如下：
 
 | ossPrefix | ossDateFormat | ossPostfix | 目录 |
 |-----------|---------------|------------|-----|
