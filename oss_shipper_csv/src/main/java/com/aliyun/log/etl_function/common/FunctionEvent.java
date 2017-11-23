@@ -52,7 +52,6 @@ public class FunctionEvent {
             this.logShardId = sourceObj.getInt(Consts.EVENT_LOG_SHARD_FIELD_NAME);
             this.logBeginCursor = sourceObj.getString(Consts.EVENT_LOG_BEGIN_CURSOR_FIELD_NAME);
             this.logEndCursor = sourceObj.getString(Consts.EVENT_LOG_END_CURSOR_FIELD_NAME);
-            this.cursorTime = sourceObj.getInt(Consts.EVENT_LOG_CURSOR_TIME_FIELD_NAME);
             parameterJsonObject = rootObj.getJSONObject(Consts.EVENT_PARAMETER_FIELD_NAME);
         } catch (JSONException e) {
             this.logger.error("parse inputStream to json event fail, exception: " + e.getMessage());
@@ -68,6 +67,7 @@ public class FunctionEvent {
         } catch (JSONException e) {
             this.taskId = "";
         }
+        this.cursorTime = rootObj.getInt(Consts.EVENT_LOG_CURSOR_TIME_FIELD_NAME);
     }
 
     public String getJobName() {

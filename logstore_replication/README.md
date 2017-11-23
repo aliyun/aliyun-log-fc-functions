@@ -12,17 +12,17 @@
 
 复制的源数据写入函数配置中设置的目标日志服务project、logstore。
 
-# 函数输入（[函数event](https://help.aliyun.com/document_detail/51885.html)）
+# 函数输入
 
-functioin event根据用户配置增加logstore的shard curosr等信息后得到。输入用于指示function从shard的什么位置开始、停止读取数据，并为函数自定义逻辑提供额外配置（例如数据做什么加工、写出到哪里）。当shard有数据写入时，日志服务会定时触发函数执行。
+* [函数event](https://help.aliyun.com/document_detail/51885.html)
 
-在[函数服务控制台](https://fc.console.aliyun.com/#/serviceList/)需要填写以下配置项：
+该[event](https://help.aliyun.com/document_detail/60781.html?spm=5176.product28958.6.634.kEFuYC#h1--event)由日志服务生成并在数据到来时自动触发函数执行。
 
-* 通用配置
+* 配置
 
-请参考[日志服务-自定义ETL-用户指南](https://help.aliyun.com/document_detail/60291.html)。
+前往[函数计算控制台](https://fc.console.aliyun.com/#/serviceList/)，配置方法参考[使用指南](https://help.aliyun.com/document_detail/60291.html?spm=5176.doc60781.6.633.YgBNLD#h1-u4F7Fu7528u6307u5357)。
 
-* 函数配置（JSON Object类型，与具体的函数实现有关）
+> 请参考下面JSON填写自己的函数配置：
 
 ```
 {
@@ -58,4 +58,6 @@ functioin event根据用户配置增加logstore的shard curosr等信息后得到
 
 # 权限策略
 
-AliyunLogFullAccess。
+| 建议的默认权限 | 说明 |
+|--------------|-----|
+| AliyunLogFullAccess | 读、写日志服务 |

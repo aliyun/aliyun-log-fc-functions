@@ -202,11 +202,12 @@ public class OssShipperCsv implements StreamRequestHandler {
             this.logger.warn("ossDateFormat" + ossDateFormat + " not valid, use " + DEFAULT_OSS_DATEFORMAT + " as default");
         }
         StringBuilder sb = new StringBuilder(ossPrefix);
-        sb.append(dateFormat.format((long) this.event.getCursorTime() * 1000).toString())
-                .append("/").append(this.event.getLogShardId())
-                .append("_").append(this.event.getLogBeginCursor())
-                .append("_").append(this.event.getLogEndCursor())
-                .append(this.parameter.getOssPostfix());
+        String dateFormatStr = dateFormat.format((long) this.event.getCursorTime() * 1000).toString();
+        if (!dateFormatStr.endsWith("/")) {
+            sb.append("/");
+        }
+        sb.append(this.event.getLogShardId()).append("_").append(this.event.getLogBeginCursor())
+                .append("_").append(this.event.getLogEndCursor()).append(this.parameter.getOssPostfix());
         return sb.toString();
     }
 
