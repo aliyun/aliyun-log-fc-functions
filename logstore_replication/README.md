@@ -27,7 +27,7 @@
 ```
 {
   "source": {
-    "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com",
+    "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com"
   },
   "target": {
     "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com",
@@ -61,3 +61,14 @@
 | 建议的默认权限 | 说明 |
 |--------------|-----|
 | AliyunLogFullAccess | 读、写日志服务 |
+
+# 函数配置
+
+| 配置项 | 值 |
+|-----|-------|
+| runtime | java8 |
+| handler | com.aliyun.log.etl_function.LogstoreReplication::handleRequest |
+| memory | 384MB |
+| timeout | 120s |
+| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/logstore_replication/jar/latest/log-etl-logstore-replication.jar |
+

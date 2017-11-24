@@ -14,7 +14,7 @@
 
 # 函数输入
 
-*（[函数event](https://help.aliyun.com/document_detail/51885.html)）
+*[函数event](https://help.aliyun.com/document_detail/51885.html)
 
 该[event](https://help.aliyun.com/document_detail/60781.html?spm=5176.product28958.6.634.kEFuYC#h1--event)由日志服务生成并在数据到来时自动触发函数执行。
 
@@ -22,7 +22,7 @@
 
 前往[函数计算控制台](https://fc.console.aliyun.com/#/serviceList/)，配置方法参考[使用指南](https://help.aliyun.com/document_detail/60291.html?spm=5176.doc60781.6.633.YgBNLD#h1-u4F7Fu7528u6307u5357)。
 
-> 请参考下面JSON填写自己的函数配置：
+> 请参考下面JSON填写自己的函数参数：
 
 ```
 {
@@ -98,3 +98,13 @@
 |--------------|-----|
 | AliyunLogFullAccess | 读、写日志服务 |
 | AliyunOSSFullAccess | 写OSS |
+
+# 函数配置
+
+| 配置项 | 值 |
+|-----|-------|
+| runtime | java8 |
+| handler | com.aliyun.log.etl_function.OssShipperCsv::handleRequest |
+| memory | 768MB |
+| timeout | 120s |
+| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/oss_shipper_csv/jar/latest/log-etl-oss-shipper-csv.jar |

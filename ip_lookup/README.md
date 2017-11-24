@@ -106,3 +106,13 @@ time:09/Oct/2017:06:12:03 +0800
 |--------------|-----|
 | AliyunLogFullAccess | 读、写日志服务 |
 | AliyunOSSReadOnlyAccess | 读OSS |
+
+# 函数配置
+
+| 配置项 | 值 |
+|-----|-------|
+| runtime | java8 |
+| handler | com.aliyun.log.etl_function.IpLookup::handleRequest |
+| memory | 768MB |
+| timeout | 120s |
+| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/ip_lookup/jar/latest/log-etl-ip-lookup.jar |
