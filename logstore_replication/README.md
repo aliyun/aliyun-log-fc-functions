@@ -22,7 +22,7 @@
 
 前往[函数计算控制台](https://fc.console.aliyun.com/#/serviceList/)，配置方法参考[使用指南](https://help.aliyun.com/document_detail/60291.html?spm=5176.doc60781.6.633.YgBNLD#h1-u4F7Fu7528u6307u5357)。
 
-> 请参考下面JSON填写自己的函数配置：
+> 请参考下面JSON填写自己的函数参数：
 
 ```
 {

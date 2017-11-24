@@ -14,7 +14,7 @@
 
 # 函数输入
 
-*[函数event](https://help.aliyun.com/document_detail/51885.html)
+* [函数event](https://help.aliyun.com/document_detail/51885.html)
 
 该[event](https://help.aliyun.com/document_detail/60781.html?spm=5176.product28958.6.634.kEFuYC#h1--event)由日志服务生成并在数据到来时自动触发函数执行。
 
