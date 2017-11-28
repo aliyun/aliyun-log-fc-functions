@@ -31,8 +31,8 @@
   },
   "target": {
     "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com",
-    "logstoreName": "logstore-replication",
-    "projectName": "etl-test"
+    "projectName": "etl-test",
+    "logstoreName": "logstore-replication"
   }
 }
 ```
@@ -42,7 +42,7 @@
 | source | endpoint | N | 如不填写，使用默认的本Region内网域名 |
 | target | endpoint | N | 如不填写，使用默认的本Region内网域名 |
 | target | projectName | Y | 日志输出的project名字 |
-| target |  logstoreName | Y | 日志输出的logstore名字 |
+| target | logstoreName | Y | 日志输出的logstore名字 |
 
 # 函数输出
 

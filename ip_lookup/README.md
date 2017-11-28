@@ -50,12 +50,12 @@ time:09/Oct/2017:06:12:03 +0800
 ```
 {
   "source": {
-    "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com",
+    "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com"
   },
   "target": {
     "endpoint": "http://cn-shanghai-intranet.log.aliyuncs.com",
-    "logstoreName": "ip-location-mapping",
-    "projectName": "etl-test"
+    "projectName": "etl-test",
+    "logstoreName": "ip-location-mapping"
   },
   "transform": {
     "cityKeyName": "city",
@@ -66,7 +66,6 @@ time:09/Oct/2017:06:12:03 +0800
     "ossEndpointOfIpData": "http://oss-cn-hangzhou-internal.aliyuncs.com",
     "ossObjectOfIpData": "ipdata/ipdata_geo_isp_code.txt.utf8.gz",
     "provinceKeyName": "province"
-    "regionKeyName": ""
   }
 }
 ```
