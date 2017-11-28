@@ -114,4 +114,5 @@ time:09/Oct/2017:06:12:03 +0800
 | handler | com.aliyun.log.etl_function.IpLookup::handleRequest |
 | memory | 768MB |
 | timeout | 120s |
-| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/ip_lookup/jar/latest/log-etl-ip-lookup.jar |
+| code | https://github.com/aliyun/aliyun-log-fc-functions/raw/master/ip_lookup/jar/latest/log-etl-ip-lookup.jar |
+| code md5sum | 1450375204e4cbd91d1e95a4d8935c67 |

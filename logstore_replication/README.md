@@ -70,5 +70,5 @@
 | handler | com.aliyun.log.etl_function.LogstoreReplication::handleRequest |
 | memory | 384MB |
 | timeout | 120s |
-| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/logstore_replication/jar/latest/log-etl-logstore-replication.jar |
-
+| code | https://github.com/aliyun/aliyun-log-fc-functions/raw/master/logstore_replication/jar/latest/log-etl-logstore-replication.jar |
+| code md5sum | 37cf7d59377d956bfee59dae04715ad0 |

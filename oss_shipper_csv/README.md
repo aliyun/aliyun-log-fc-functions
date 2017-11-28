@@ -107,4 +107,5 @@
 | handler | com.aliyun.log.etl_function.OssShipperCsv::handleRequest |
 | memory | 768MB |
 | timeout | 120s |
-| code | https://github.com/aliyun/aliyun-log-fc-functions/blob/master/oss_shipper_csv/jar/latest/log-etl-oss-shipper-csv.jar |
+| code | https://github.com/aliyun/aliyun-log-fc-functions/raw/master/oss_shipper_csv/jar/latest/log-etl-oss-shipper-csv.jar |
+| code md5sum | e6dea98e0c47918ddcbc8bfde08e7d24 |
