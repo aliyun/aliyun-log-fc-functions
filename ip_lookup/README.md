@@ -76,7 +76,7 @@ time:09/Oct/2017:06:12:03 +0800
 | target | endpoint | N | 如不填写，使用默认的本Region内网域名 |
 | target | projectName | Y | 日志输出的project名字 |
 | target |  logstoreName | Y | 日志输出的logstore名字 |
-| transform | ossEndpointOfIpData | Y | ipdata资源文件所在OSS endpoint，字典文件取自[ipip免费数据库](https://www.ipip.net/download.html) | 
+| transform | ossEndpointOfIpData | Y | ipdata资源文件所在OSS endpoint。字典文件取自[ipip免费数据库](https://www.ipip.net/download.html)（也可以这里下载[20170704版本](https://github.com/aliyun/aliyun-log-fc-functions/raw/master/ip_lookup/resources/17monipdb.dat)），请下载上传到您账号下的OSS bucket，建议将OSS Bucket与函数服务Service放在相同Region，可以在函数执行时走内网下载避免公网带宽费用（函数实现已做优化，如果函数在5分钟内会执行一次，将会复用之前的文件内容）| 
 | transform | ossBucketOfIpData | Y | ipdata资源文件所在OSS bucket | 
 | transform | ossObjectOfIpData | Y | ipdata资源文件所在OSS object | 
 | transform | ipKeyName | Y | 输入日志的哪个key包含需要处理的ip |
@@ -84,8 +84,6 @@ time:09/Oct/2017:06:12:03 +0800
 | transform | provinceKeyName | N | 加工生成的ip归属省份字段key名，如留空或该配置不存在则不输出  | 
 | transform | cityKeyName | N | 加工生成的ip归属城市字段key名，如留空或该配置不存在则不输出  | 
 | transform | ispKeyName | N | 加工生成的ip归属ISP字段key名，如留空或该配置不存在则不输出  | 
-
-> 请下载字典文件 http://log-etl-resources.oss-cn-hangzhou.aliyuncs.com/ipdata/17monipdb.dat 并上传到您账号下的OSS bucket，填写相应的ossEndpointOfIpData/ossBucketOfIpData/ossObjectOfIpData配置。建议将OSS Bucket与函数服务Service放在相同Region，使用内网下载以避免函数执行过程中公网传输产生的费用（函数实现已做优化，如果函数在5分钟内会执行一次，将会复用之前的文件内容并不需要重新下载字典文件）。
 
 # 函数输出 
 
@@ -115,4 +113,4 @@ time:09/Oct/2017:06:12:03 +0800
 | memory | 768MB |
 | timeout | 120s |
 | code | https://github.com/aliyun/aliyun-log-fc-functions/raw/master/ip_lookup/jar/latest/log-etl-ip-lookup.jar |
-| code md5sum | 1450375204e4cbd91d1e95a4d8935c67 |
+| code md5sum | 8ddc8fb857acfcf7a7d805ef43127dcf |
