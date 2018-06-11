@@ -40,7 +40,7 @@
 | 一级key | 二级key | 是否必填 | 描述 |
 |--------|---------|--------|------|
 | source | endpoint | N | 如不填写，使用默认的本Region内网域名 |
-| target | endpoint | N | 如不填写，使用默认的本Region内网域名 |
+| target | endpoint | Y | 日志输出的Project域名 |
 | target | projectName | Y | 日志输出的project名字 |
 | target | logstoreName | Y | 日志输出的logstore名字 |
 
