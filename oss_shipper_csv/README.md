@@ -74,9 +74,9 @@
 
 | ossPrefix | ossDateFormat | ossPostfix | 目录 |
 |-----------|---------------|------------|-----|
-| test1 | yyyy_MM_dd_HH_mm_00	| .csv | oss://bucket/test1/2016_01_27_20_30_00/278_MTUxMTI1NDk5Mjg0NTU1MTQ0MQ==_MTUxMTI1NDk5Mjg0NTU1MTQ0Mg==.csv |
-| test1 | yyyyMMdd | .csv.gzip | oss://bucket/test1/20160127/297_MTUxMTI1NTAxNDUyNTM4NTM3NQ==_MTUxMTI1NTAxNDUyNTM4NTM3Ng==.csv.gzip |
-| test2 | yyyyMMddHHmm | .csv.snappy | oss://bucket/test2/201601272000/303_MTUxMTI1NDQwNzUxMzMzMjMyOQ==_MTUxMTI1NDQwNzUxMzMzMjMzMQ==.csv.snappy |
+| test1/ | yyyy_MM_dd_HH_mm_00	| .csv | oss://bucket/test1/2016_01_27_20_30_00/278_MTUxMTI1NDk5Mjg0NTU1MTQ0MQ==_MTUxMTI1NDk5Mjg0NTU1MTQ0Mg==.csv |
+| test1/ | yyyyMMdd | .csv.gzip | oss://bucket/test1/20160127/297_MTUxMTI1NTAxNDUyNTM4NTM3NQ==_MTUxMTI1NTAxNDUyNTM4NTM3Ng==.csv.gzip |
+| test2 | yyyyMMddHHmm | .csv.snappy | oss://bucket/test2201601272000/303_MTUxMTI1NDQwNzUxMzMzMjMyOQ==_MTUxMTI1NDQwNzUxMzMzMjMzMQ==.csv.snappy |
 
 # 函数输出 
 
