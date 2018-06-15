@@ -203,6 +203,7 @@ public class OssShipperCsv implements StreamRequestHandler {
         }
         StringBuilder sb = new StringBuilder(ossPrefix);
         String dateFormatStr = dateFormat.format((long) this.event.getCursorTime() * 1000).toString();
+        sb.append(dateFormatStr);
         if (!dateFormatStr.endsWith("/")) {
             sb.append("/");
         }
