@@ -64,7 +64,7 @@ public class IpLookup implements StreamRequestHandler {
         String logLogstoreName = this.event.getLogLogstoreName();
         int logShardId = this.event.getLogShardId();
         String logBeginCursor = this.event.getLogBeginCursor();
-        String logEndCurosr = this.event.getLogEndCursor();
+        String logEndCursor = this.event.getLogEndCursor();
 
         Client sourceClient = new Client(this.event.getLogEndpoint(), this.accessKeyId, this.accessKeySecret);
         sourceClient.SetSecurityToken(this.securityToken);
@@ -84,7 +84,7 @@ public class IpLookup implements StreamRequestHandler {
                 int sleepMillis = RETRY_SLEEP_MILLIS;
                 try {
                     BatchGetLogResponse logDataRes = sourceClient.BatchGetLog(logProjectName, logLogstoreName, logShardId,
-                            3, cursor, logEndCurosr);
+                            3, cursor, logEndCursor);
                     logGroupDataList = logDataRes.GetLogGroups();
                     nextCursor = logDataRes.GetNextCursor();
                     /*
@@ -133,8 +133,7 @@ public class IpLookup implements StreamRequestHandler {
                     response.addShipBytes(logGroupBytes.length);
                 }
             }
-            cursor = nextCursor;
-            if (cursor.equals(logEndCurosr)) {
+            if (cursor.equals(nextCursor)) {
                 /*
                 this.logger.debug("read logstore shard to defined cursor success, project_name: " + logProjectName +
                         ", job_name: " + this.event.getJobName() + ", task_id: " + this.event.getTaskId()
@@ -142,6 +141,7 @@ public class IpLookup implements StreamRequestHandler {
                 */
                 break;
             }
+            cursor = nextCursor;
         }
         outputStream.write(response.toJsonString().getBytes());
     }

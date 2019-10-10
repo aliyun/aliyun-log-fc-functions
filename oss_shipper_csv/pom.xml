@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aliyun.log.etl</groupId>
-    <artifactId>log-etl-user-defined-function</artifactId>
+    <artifactId>log-etl-oss-shipper-csv</artifactId>
     <version>1.0</version>
 
     <dependencies>
